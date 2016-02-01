@@ -13,10 +13,16 @@ function storageAvailable(type) {
 
 (function () {
 
-  AWS.config.credentials = {};
+  var worker = new Worker('js/uploader.js');
 
-  // Configure your region
-  AWS.config.region = 'us-east-1';
+  worker.onmessage = function(e) {
+    if (!e.data.err) {
+      var store = getObjectStore("images", "readwrite");
+      store.delete(e.data.id);
+      document.getElementById(e.data.name).remove();
+    }
+  }
+
 
   window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.OIndexedDB || window.msIndexedDB,
     IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.OIDBTransaction || window.msIDBTransaction,
@@ -101,24 +107,11 @@ function storageAvailable(type) {
 
 
     document.querySelector("#upload").onclick = function() {
-      var bucket = new AWS.S3({params: {Bucket: 'mantika-plates'}});
-
-      var uploadImage = function(key, image) {
-          var params = {Key: uuid.v4(), ContentType: image.type, Body: image};
-          bucket.makeUnauthenticatedRequest('putObject', params, function(err, data) {
-            if (!err) {
-              var store = getObjectStore("images", "readwrite");
-              store.delete(key);
-              document.getElementById(image.name).remove();
-            }
-          });
-      };
-
       var store = getObjectStore("images", "readonly");
       store.openCursor().onsuccess = function(event) {
         var cursor = event.target.result;
         if (cursor) {
-          uploadImage(cursor.key, cursor.value);
+          worker.postMessage({id: cursor.key, image: cursor.value});
           cursor.continue();
         } else {
           console.log('All done');
