@@ -45,8 +45,7 @@ function storageAvailable(type) {
     store.openCursor().onsuccess = function(event) {
       var cursor = event.target.result;
       if (cursor) {
-        var imgURL = URL.createObjectURL(cursor.value);
-        pending.innerHTML += '<img id="'+cursor.value.name+'" src="'+imgURL+'"></img>';
+        pending.innerHTML += '<div id="'+cursor.value.name+'">'+cursor.value.name+'</div>';
         cursor.continue();
       } else {
         console.log('No more entries');
@@ -84,10 +83,8 @@ function storageAvailable(type) {
           file = files[i];
           try {
 
-            // Create ObjectURL
-            var imgURL = URL.createObjectURL(file);
             store.put(file);
-            pending.innerHTML += '<img id="'+file.name+'" src="'+imgURL+'"></img>';
+            pending.innerHTML += '<div id="'+file.name+'">'+file.name+'</div>';
 
           } catch (e) {
             alert('Error processing image');
