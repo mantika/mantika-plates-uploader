@@ -1,24 +1,26 @@
-function storageAvailable(type) {
-  try {
-    var storage = window[type],
-      x = '__storage_test__';
-    storage.setItem(x, x);
-    storage.removeItem(x);
-    return true;
-  }
-  catch(e) {
-    return false;
-  }
-}
-
 (function () {
+
+  var getThumbnail = function(original) {
+    var canvas = document.createElement("canvas")
+
+    canvas.width = 100;
+    canvas.height = 100;
+    canvas.id = original.id;
+
+    canvas.getContext("2d").drawImage(original, 0, 0, canvas.width, canvas.height)
+
+    return canvas
+  }
 
   var worker = new Worker('js/uploader.js');
 
   worker.onmessage = function(e) {
     if (!e.data.err) {
       var store = getObjectStore("images", "readwrite");
-      store.delete(e.data.id);
+      var request = store.delete(e.data.id);
+      request.onerror = function(event) {
+        console.log("Error deleting data", event);
+      }
       document.getElementById(e.data.name).remove();
     }
   }
@@ -43,7 +45,8 @@ function storageAvailable(type) {
     db = request.result;
 
     db.onerror = function (event) {
-      alert('Error opening DB');
+      console.log(event.target.errorCode);
+      alert('DB Error');
     };
 
     // Populate saved images
@@ -51,7 +54,12 @@ function storageAvailable(type) {
     store.openCursor().onsuccess = function(event) {
       var cursor = event.target.result;
       if (cursor) {
-        pending.innerHTML += '<div id="'+cursor.value.name+'">'+cursor.value.name+'</div>';
+        var image = new Image();
+        image.addEventListener('load', function(){
+          pending.appendChild(getThumbnail(this));
+        });
+        image.id = cursor.value.name;
+        image.src = URL.createObjectURL(cursor.value);
         cursor.continue();
       } else {
         console.log('No more entries');
@@ -90,7 +98,13 @@ function storageAvailable(type) {
           try {
 
             store.put(file);
-            pending.innerHTML += '<div id="'+file.name+'">'+file.name+'</div>';
+
+            var image = new Image();
+            image.addEventListener('load', function(){
+              pending.appendChild(getThumbnail(this));
+            });
+            image.id = file.name;
+            image.src = URL.createObjectURL(file);
 
           } catch (e) {
             alert('Error processing image');

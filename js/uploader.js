@@ -7,6 +7,7 @@ window.AWS.config.credentials = {};
 
 window.AWS.config.httpOptions.timeout = 0;
 window.AWS.config.httpOptions.xhrAsync = false;
+window.AWS.config.maxRetries = 0;
 
 // Configure your region
 window.AWS.config.region = 'us-east-1';
