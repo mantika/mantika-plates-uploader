@@ -54,15 +54,11 @@
     store.openCursor().onsuccess = function(event) {
       var cursor = event.target.result;
       if (cursor) {
-        var image = new Image();
-        image.addEventListener('load', function(){
-          pending.appendChild(getThumbnail(this));
-        });
-        image.id = cursor.value.name;
-        image.src = URL.createObjectURL(cursor.value);
+        images.push({name: cursor.value.name, url: URL.createObjectURL(cursor.value)})
         cursor.continue();
       } else {
         console.log('No more entries');
+        populateImages();
       }
     };
   };
@@ -83,6 +79,25 @@
   }
 
 
+  var images = [];
+
+  populateImages = function() {
+    if (images.length > 0) {
+      var current  = images.shift();
+      var image = new Image();
+      image.addEventListener('load', function(){
+        pending.appendChild(getThumbnail(this));
+        populateImages();
+      });
+      image.id = current.name;
+      image.src = current.url;
+    } else {
+      console.log("Done populating images");
+    }
+  }
+
+
+
   if (takePicture && pending) {
 
     // Set events
@@ -99,18 +114,14 @@
 
             store.put(file);
 
-            var image = new Image();
-            image.addEventListener('load', function(){
-              pending.appendChild(getThumbnail(this));
-            });
-            image.id = file.name;
-            image.src = URL.createObjectURL(file);
+            images.push({url: URL.createObjectURL(file), name: file.name})
 
           } catch (e) {
             alert('Error processing image');
             console.log(e);
           }
         }
+        populateImages();
       }
     };
 
