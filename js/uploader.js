@@ -17,7 +17,7 @@ var queue = [];
 setInterval(function(){
   if (queue.length > 0 ) {
     var imgData = queue[0];
-    var params = {Key: window.uuid.v4(), ContentType: imgData.image.type, Body: imgData.image};
+    var params = {Key: window.uuid.v4(), ContentType: imgData.image.type, Body: imgData.image, ACL: 'public-read'};
     bucket.makeUnauthenticatedRequest('putObject', params, function(err, data) {
       if (!err) {
         postMessage({err: err, id: imgData.id, name: imgData.image.name});
